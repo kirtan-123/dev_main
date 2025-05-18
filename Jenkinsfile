@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    tools {
+        python 'Python3'
+    }
+    
     stages {
         stage('Checkout') {
             steps {
@@ -11,8 +15,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 bat '''
+                    python --version
                     python -m pip install --upgrade pip
-                    pip install -r requirements.txt
+                    python -m pip install -r requirements.txt
                 '''
             }
         }
