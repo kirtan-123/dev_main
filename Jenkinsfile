@@ -1,8 +1,8 @@
 pipeline {
     agent any
     
-    tools {
-        python 'Python3'
+    environment {
+        PATH = "C:\\Users\\Kirtan\\AppData\\Local\\Programs\\Python\\Python312;C:\\Users\\Kirtan\\AppData\\Local\\Programs\\Python\\Python312\\Scripts;${env.PATH}"
     }
     
     stages {
@@ -15,7 +15,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 bat '''
+                    echo "Verifying Python installation..."
                     python --version
+                    echo "Installing dependencies..."
                     python -m pip install --upgrade pip
                     python -m pip install -r requirements.txt
                 '''
