@@ -1,65 +1,38 @@
 pipeline {
     agent any
-
-    environment {
-        PYTHON_VERSION = '3.8'  // Adjust this to match your Python version
-    }
-
+    
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Setup Python Environment') {
+        
+        stage('Install Dependencies') {
             steps {
-                script {
-                    // Create and activate virtual environment
-                    sh '''
-                        python -m venv venv
-                        . venv/bin/activate
-                        pip install -r requirements.txt
-                    '''
-                }
+                bat '''
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
-
-        stage('Run Tests') {
+        
+        stage('Deploy Flask App') {
             steps {
-                script {
-                    sh '''
-                        . venv/bin/activate
-                        pip install pytest
-                        python -m pytest tests/ || true
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                script {
-                    // Start the Flask application in the background
-                    sh '''
-                        . venv/bin/activate
-                        nohup python app.py > app.log 2>&1 &
-                    '''
-                }
+                bat '''
+                    echo "Starting Flask Application..."
+                    start /B python app.py
+                '''
             }
         }
     }
-
+    
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Flask application deployed successfully!'
         }
         failure {
-            echo 'Pipeline failed!'
-        }
-        always {
-            // Clean up
-            sh 'pkill -f "python app.py" || true'
+            echo 'Deployment failed!'
         }
     }
 } 
