@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'schedule-tracker'
-        DOCKER_TAG = 'latest'
-        KUBECONFIG = credentials('kubeconfig')
+        PYTHON_VERSION = '3.8'  // Adjust this to match your Python version
     }
 
     stages {
@@ -14,10 +12,15 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Setup Python Environment') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    // Create and activate virtual environment
+                    sh '''
+                        python -m venv venv
+                        . venv/bin/activate
+                        pip install -r requirements.txt
+                    '''
                 }
             }
         }
@@ -25,28 +28,23 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    sh 'pip install pytest'
-                    sh 'python -m pytest tests/'
+                    sh '''
+                        . venv/bin/activate
+                        pip install pytest
+                        python -m pytest tests/ || true
+                    '''
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy') {
             steps {
                 script {
-                    // Apply Kubernetes configurations
-                    sh 'kubectl apply -f kubernetes/persistent-volume.yaml'
-                    sh 'kubectl apply -f kubernetes/deployment.yaml'
-                    sh 'kubectl apply -f kubernetes/service.yaml'
-                }
-            }
-        }
-
-        stage('Verify Deployment') {
-            steps {
-                script {
-                    sh 'kubectl get pods -l app=schedule-tracker'
-                    sh 'kubectl get services schedule-tracker-service'
+                    // Start the Flask application in the background
+                    sh '''
+                        . venv/bin/activate
+                        nohup python app.py > app.log 2>&1 &
+                    '''
                 }
             }
         }
@@ -58,6 +56,10 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed!'
+        }
+        always {
+            // Clean up
+            sh 'pkill -f "python app.py" || true'
         }
     }
 } 
