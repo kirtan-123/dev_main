@@ -39,7 +39,11 @@ pipeline {
         stage('Build and Load Docker Image') {
             steps {
                 script {
-                    // Build the image
+                    // Set Docker environment to Minikube's Docker daemon
+                    bat "minikube docker-env --shell cmd > minikube-env.bat"
+                    bat "call minikube-env.bat"
+                    
+                    // Build the image inside Minikube's Docker daemon
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                     
                     // Verify the image exists
