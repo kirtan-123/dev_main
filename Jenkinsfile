@@ -37,16 +37,15 @@ pipeline {
         stage('Build and Load Docker Image') {
             steps {
                 script {
+                    // Clean up any existing deployment
+                    bat "kubectl delete deployment schedule-tracker --ignore-not-found=true"
+                    bat "kubectl delete pods --all --ignore-not-found=true"
+                    
                     // Build the image
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                     
                     // Verify the image exists
                     bat "docker images | findstr ${DOCKER_IMAGE}"
-                    
-                    // Update deployment to use local image
-                    bat """
-                        kubectl set image deployment/schedule-tracker schedule-tracker=${DOCKER_IMAGE}:${DOCKER_TAG} --record
-                    """
                 }
             }
         }
@@ -60,8 +59,16 @@ pipeline {
                     // Apply PersistentVolumeClaim
                     bat "kubectl apply -f kubernetes/persistent-volume.yaml"
                     
-                    // Apply Deployment
-                    bat "kubectl apply -f kubernetes/deployment.yaml"
+                    // Create deployment with correct image pull policy
+                    bat """
+                        kubectl create deployment schedule-tracker --image=${DOCKER_IMAGE}:${DOCKER_TAG} --dry-run=client -o yaml > deployment.yaml
+                        kubectl apply -f deployment.yaml
+                    """
+                    
+                    // Update deployment to use local image
+                    bat """
+                        kubectl patch deployment schedule-tracker -p '{"spec":{"template":{"spec":{"containers":[{"name":"schedule-tracker","imagePullPolicy":"Never"}]}}}}'
+                    """
                     
                     // Apply Service
                     bat "kubectl apply -f kubernetes/service.yaml"
