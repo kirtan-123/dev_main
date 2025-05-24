@@ -65,10 +65,21 @@ pipeline {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
                         echo "Deploying to Minikube cluster..."
-                        // Optional: Apply Kubernetes manifests here
-                        bat "kubectl apply -f deployment.yaml"
-                        bat "kubectl rollout status deployment/schedule-tracker --timeout=60s"
-
+                        // Verify deployment.yaml exists in the kubernetes folder
+                        def fileExists = fileExists 'kubernetes/deployment.yaml'
+                        if (!fileExists) {
+                            error "deployment.yaml not found in kubernetes folder"
+                        }
+                        
+                        // Apply Kubernetes manifests from the kubernetes folder
+                        bat "kubectl apply -f kubernetes/deployment.yaml"
+                        
+                        // Wait for deployment to be ready
+                        timeout(time: 2, unit: 'MINUTES') {
+                            bat "kubectl rollout status deployment/schedule-tracker"
+                        }
+                        
+                        // Get service URL
                         def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
                         echo "App available at: ${serviceUrl}"
                     }
