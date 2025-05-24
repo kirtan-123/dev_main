@@ -17,18 +17,19 @@ pipeline {
         stage('Setup Minikube') {
             steps {
                 script {
-                    // Check if Minikube is running
-                    def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
+                    // Delete existing minikube cluster if it exists
+                    bat "minikube delete"
                     
-                    if (!minikubeStatus.contains("Running")) {
-                        echo "Starting Minikube..."
-                        bat "minikube start"
-                        
-                        // Wait for Minikube to be ready
-                        bat "minikube status"
-                    } else {
-                        echo "Minikube is already running"
-                    }
+                    // Start minikube with docker driver
+                    bat "minikube start --driver=docker --force"
+                    
+                    // Wait for minikube to be ready
+                    bat "minikube status"
+                    
+                    // Configure docker to use minikube's docker daemon
+                    bat "minikube docker-env --shell cmd"
+                    bat "minikube docker-env --shell cmd | findstr SET > minikube-env.bat"
+                    bat "call minikube-env.bat"
                 }
             }
         }
@@ -36,11 +37,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build Docker image locally for Minikube
+                    // Build Docker image directly in minikube's docker daemon
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    
-                    // Load image into Minikube
-                    bat "minikube image load ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
