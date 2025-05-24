@@ -38,28 +38,32 @@ pipeline {
         
         stage('Build and Load Docker Image') {
             steps {
-                script {
-                    // Set Docker environment to Minikube's Docker daemon
-                    bat "minikube docker-env --shell cmd > minikube-env.bat"
-                    bat "call minikube-env.bat"
-                    
-                    // Build the image inside Minikube's Docker daemon
-                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    
-                    // Verify the image exists
-                    bat "docker images | findstr ${DOCKER_IMAGE}"
+                dir('c:/Users/Kirtan/Desktop/dev_main') {
+                    script {
+                        // Set Docker environment to Minikube's Docker daemon
+                        bat "minikube docker-env --shell cmd > minikube-env.bat"
+                        bat "call minikube-env.bat"
+                        
+                        // Build the image inside Minikube's Docker daemon
+                        bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                        
+                        // Verify the image exists
+                        bat "docker images | findstr ${DOCKER_IMAGE}"
+                    }
                 }
             }
         }
         
         stage('Deploy to Minikube') {
             steps {
-                script {
-                    // Skip kubectl commands, assume manual deployment
-                    echo "Skipping kubectl deployment commands as Kubernetes is managed manually."
-                    
-                    // Print final web page URL directly with static NodePort
-                    echo "Access the application at: http://127.0.0.1:30000"
+                dir('c:/Users/Kirtan/Desktop/dev_main') {
+                    script {
+                        // Skip kubectl commands, assume manual deployment
+                        echo "Skipping kubectl deployment commands as Kubernetes is managed manually."
+                        
+                        // Print final web page URL directly with static NodePort
+                        echo "Access the application at: http://127.0.0.1:30000"
+                    }
                 }
             }
         }
