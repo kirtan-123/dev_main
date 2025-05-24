@@ -85,6 +85,9 @@ pipeline {
                             }
                         }
                     }
+                    // Print final web page URL
+                    def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
+                    echo "Access the application at: http://${minikubeIP}:30000"
                 }
             }
         }
