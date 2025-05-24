@@ -7,6 +7,7 @@ spec:
   selector:
     app: schedule-tracker
   ports:
-  - port: 5000
-    targetPort: 5000
-    nodePort: 30000 
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30000

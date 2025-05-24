@@ -58,10 +58,8 @@ pipeline {
                     // Skip kubectl commands, assume manual deployment
                     echo "Skipping kubectl deployment commands as Kubernetes is managed manually."
                     
-                    // Print final web page URL using minikube service command
-                    def serviceURL = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
-                    echo "Access the application at: ${serviceURL}"
-                    echo "Note: To ensure the URL remains the same, you can assign a static NodePort in your Kubernetes service definition (kubernetes/service.yaml)."
+                    // Print final web page URL directly with static NodePort
+                    echo "Access the application at: http://127.0.0.1:30000"
                 }
             }
         }
