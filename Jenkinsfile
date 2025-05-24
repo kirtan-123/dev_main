@@ -53,61 +53,35 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 script {
-                    // Apply PersistentVolume
+                    // Apply PersistentVolume and PersistentVolumeClaim
                     bat "kubectl apply -f kubernetes/persistent-volume.yaml"
                     
-                    // Apply PersistentVolumeClaim
-                    bat "kubectl apply -f kubernetes/persistent-volume.yaml"
-                    
-                    // Create deployment with correct image pull policy
-                    bat """
-                        echo apiVersion: apps/v1 > deployment.yaml
-                        echo kind: Deployment >> deployment.yaml
-                        echo metadata: >> deployment.yaml
-                        echo   name: schedule-tracker >> deployment.yaml
-                        echo spec: >> deployment.yaml
-                        echo   replicas: 2 >> deployment.yaml
-                        echo   selector: >> deployment.yaml
-                        echo     matchLabels: >> deployment.yaml
-                        echo       app: schedule-tracker >> deployment.yaml
-                        echo   template: >> deployment.yaml
-                        echo     metadata: >> deployment.yaml
-                        echo       labels: >> deployment.yaml
-                        echo         app: schedule-tracker >> deployment.yaml
-                        echo     spec: >> deployment.yaml
-                        echo       containers: >> deployment.yaml
-                        echo       - name: schedule-tracker >> deployment.yaml
-                        echo         image: ${DOCKER_IMAGE}:${DOCKER_TAG} >> deployment.yaml
-                        echo         imagePullPolicy: Never >> deployment.yaml
-                        echo         ports: >> deployment.yaml
-                        echo         - containerPort: 5000 >> deployment.yaml
-                        echo         volumeMounts: >> deployment.yaml
-                        echo         - name: sqlite-data >> deployment.yaml
-                        echo           mountPath: /app/instance >> deployment.yaml
-                        echo       volumes: >> deployment.yaml
-                        echo       - name: sqlite-data >> deployment.yaml
-                        echo         persistentVolumeClaim: >> deployment.yaml
-                        echo           claimName: sqlite-pvc >> deployment.yaml
-                    """
-                    
-                    // Apply the deployment
-                    bat "kubectl apply -f deployment.yaml"
+                    // Apply the static deployment.yaml
+                    bat "kubectl apply -f kubernetes/deployment.yaml"
                     
                     // Apply Service
                     bat "kubectl apply -f kubernetes/service.yaml"
                     
-                    // Wait for deployment with timeout and better error handling
+                    // Wait for deployment with timeout and improved error handling
                     timeout(time: 5, unit: 'MINUTES') {
-                        bat """
-                            kubectl rollout status deployment/schedule-tracker
-                            if errorlevel 1 (
-                                echo Deployment failed. Checking pod status...
-                                kubectl get pods
-                                kubectl describe deployment schedule-tracker
-                                kubectl describe pods
-                                exit /b 1
-                            )
-                        """
+                        script {
+                            def rolloutStatus = bat(script: "kubectl rollout status deployment/schedule-tracker", returnStatus: true)
+                            if (rolloutStatus != 0) {
+                                echo "Deployment failed. Checking pod status..."
+                                bat "kubectl get pods"
+                                bat "kubectl describe deployment schedule-tracker"
+                                bat "kubectl describe pods"
+                                // Optionally fetch pod logs for more diagnostics
+                                def podList = bat(script: "kubectl get pods -l app=schedule-tracker -o jsonpath='{.items[*].metadata.name}'", returnStdout: true).trim()
+                                if (podList) {
+                                    podList.split(' ').each { pod ->
+                                        echo "Logs for pod: ${pod}"
+                                        bat "kubectl logs ${pod}"
+                                    }
+                                }
+                                error("Deployment rollout failed")
+                            }
+                        }
                     }
                 }
             }
