@@ -40,11 +40,8 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
-                        // Check minikube status
-                        def minikubeStatus = bat(script: "minikube status --format='{{.Host}}'", returnStdout: true).trim()
-                        if (!minikubeStatus.equalsIgnoreCase("Running")) {
-                            error "Minikube is not running. Please start minikube before running this job."
-                        }
+                       
+                       
                         
                         // Set Docker environment to Minikube's Docker daemon
                         bat "minikube docker-env --shell cmd > minikube-env.bat"
@@ -78,7 +75,7 @@ pipeline {
             script {
                 def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
                 echo "Application deployed successfully to Minikube!"
-                echo "Access the application at: http://${minikubeIP}:30000"
+                
             }
         }
         failure {
