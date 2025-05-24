@@ -27,19 +27,26 @@ pipeline {
                         echo "Minikube is already running"
                     }
                     
-                    // Configure docker to use minikube's docker daemon
-                    bat "minikube docker-env --shell cmd"
-                    bat "minikube docker-env --shell cmd | findstr SET > minikube-env.bat"
+                    // Point shell to minikube's docker-daemon
+                    bat "minikube docker-env --shell cmd > minikube-env.bat"
                     bat "call minikube-env.bat"
                 }
             }
         }
         
-        stage('Build Docker Image') {
+        stage('Build and Load Docker Image') {
             steps {
                 script {
-                    // Build Docker image directly in minikube's docker daemon
+                    // Build the image
                     bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    
+                    // Verify the image exists
+                    bat "docker images | findstr ${DOCKER_IMAGE}"
+                    
+                    // Update deployment to use local image
+                    bat """
+                        kubectl set image deployment/schedule-tracker schedule-tracker=${DOCKER_IMAGE}:${DOCKER_TAG} --record
+                    """
                 }
             }
         }
@@ -62,11 +69,13 @@ pipeline {
                     // Wait for deployment with timeout and better error handling
                     timeout(time: 5, unit: 'MINUTES') {
                         bat """
-                            kubectl rollout status deployment/schedule-tracker || (
-                                echo "Deployment failed. Checking pod status..."
+                            kubectl rollout status deployment/schedule-tracker
+                            if errorlevel 1 (
+                                echo Deployment failed. Checking pod status...
                                 kubectl get pods
                                 kubectl describe deployment schedule-tracker
-                                exit 1
+                                kubectl describe pods
+                                exit /b 1
                             )
                         """
                     }
@@ -88,6 +97,7 @@ pipeline {
                 echo 'Deployment failed! Checking pod status...'
                 bat "kubectl get pods"
                 bat "kubectl describe deployment schedule-tracker"
+                bat "kubectl describe pods"
             }
         }
     }
