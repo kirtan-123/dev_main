@@ -65,9 +65,26 @@ pipeline {
                         def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
                         if (!minikubeStatus.contains("Running")) {
                             echo "Starting Minikube..."
-                            bat "minikube start"
-                            // Wait for Minikube to be fully ready
-                            sleep(30)
+                            try {
+                                // Set a timeout for minikube start
+                                timeout(time: 2, unit: 'MINUTES') {
+                                    bat "minikube start --force"
+                                }
+                                
+                                // Verify Minikube is actually running
+                                def verifyStatus = bat(script: "minikube status", returnStdout: true).trim()
+                                if (!verifyStatus.contains("Running")) {
+                                    error "Minikube failed to start properly"
+                                }
+                                
+                                // Wait for Minikube to be fully ready
+                                sleep(30)
+                            } catch (Exception e) {
+                                echo "Error starting Minikube: ${e.message}"
+                                // Try to clean up
+                                bat "minikube delete --force"
+                                error "Failed to start Minikube after cleanup"
+                            }
                         }
                         
                         // Run minikube service command and print the URL
