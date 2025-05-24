@@ -5,6 +5,7 @@ pipeline {
         DOCKER_IMAGE = "schedule-tracker"
         DOCKER_TAG = "latest"
         KUBE_NAMESPACE = "default"
+        KUBECONFIG = "${env.HOME}\\.kube\\config"
     }
     
     stages {
