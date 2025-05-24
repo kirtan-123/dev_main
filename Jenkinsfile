@@ -5,7 +5,7 @@ pipeline {
         DOCKER_IMAGE = "schedule-tracker"
         DOCKER_TAG = "latest"
         KUBE_NAMESPACE = "default"
-        KUBECONFIG = "kubeconfig"
+        KUBECONFIG = "C:/Users/Kirtan/.kube/config"
     }
     
     stages {
@@ -40,6 +40,12 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
+                        // Check minikube status
+                        def minikubeStatus = bat(script: "minikube status --format='{{.Host}}'", returnStdout: true).trim()
+                        if (!minikubeStatus.equalsIgnoreCase("Running")) {
+                            error "Minikube is not running. Please start minikube before running this job."
+                        }
+                        
                         // Set Docker environment to Minikube's Docker daemon
                         bat "minikube docker-env --shell cmd > minikube-env.bat"
                         bat "call minikube-env.bat"
