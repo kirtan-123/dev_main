@@ -61,6 +61,7 @@ pipeline {
                     // Print final web page URL using minikube service command
                     def serviceURL = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
                     echo "Access the application at: ${serviceURL}"
+                    echo "Note: To ensure the URL remains the same, you can assign a static NodePort in your Kubernetes service definition (kubernetes/service.yaml)."
                 }
             }
         }
