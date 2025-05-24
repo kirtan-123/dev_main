@@ -18,10 +18,10 @@ pipeline {
             steps {
                 script {
                     // Build Docker image locally for Minikube
-                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
                     
                     // Load image into Minikube
-                    sh "minikube image load ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    bat "minikube image load ${DOCKER_IMAGE}:${DOCKER_TAG}"
                 }
             }
         }
@@ -30,19 +30,19 @@ pipeline {
             steps {
                 script {
                     // Apply PersistentVolume
-                    sh "kubectl apply -f kubernetes/persistent-volume.yaml"
+                    bat "kubectl apply -f kubernetes/persistent-volume.yaml"
                     
                     // Apply PersistentVolumeClaim
-                    sh "kubectl apply -f kubernetes/persistent-volume.yaml"
+                    bat "kubectl apply -f kubernetes/persistent-volume.yaml"
                     
                     // Apply Deployment
-                    sh "kubectl apply -f kubernetes/deployment.yaml"
+                    bat "kubectl apply -f kubernetes/deployment.yaml"
                     
                     // Apply Service
-                    sh "kubectl apply -f kubernetes/service.yaml"
+                    bat "kubectl apply -f kubernetes/service.yaml"
                     
                     // Wait for deployment to be ready
-                    sh "kubectl rollout status deployment/schedule-tracker"
+                    bat "kubectl rollout status deployment/schedule-tracker"
                 }
             }
         }
@@ -51,7 +51,7 @@ pipeline {
     post {
         success {
             script {
-                def minikubeIP = sh(script: "minikube ip", returnStdout: true).trim()
+                def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
                 echo "Application deployed successfully to Minikube!"
                 echo "Access the application at: http://${minikubeIP}:30000"
             }
