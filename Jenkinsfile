@@ -14,25 +14,26 @@ pipeline {
             }
         }
         
-        stage('Setup Minikube') {
-            steps {
-                script {
-                    // Check if Minikube is running
-                    def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
+        // Skipping Setup Minikube stage as Minikube will be started manually
+        // stage('Setup Minikube') {
+        //     steps {
+        //         script {
+        //             // Check if Minikube is running
+        //             def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
                     
-                    if (!minikubeStatus.contains("Running")) {
-                        echo "Starting Minikube..."
-                        bat "minikube start --driver=docker"
-                    } else {
-                        echo "Minikube is already running"
-                    }
+        //             if (!minikubeStatus.contains("Running")) {
+        //                 echo "Starting Minikube..."
+        //                 bat "minikube start --driver=docker"
+        //             } else {
+        //                 echo "Minikube is already running"
+        //             }
                     
-                    // Point shell to minikube's docker-daemon
-                    bat "minikube docker-env --shell cmd > minikube-env.bat"
-                    bat "call minikube-env.bat"
-                }
-            }
-        }
+        //             // Point shell to minikube's docker-daemon
+        //             bat "minikube docker-env --shell cmd > minikube-env.bat"
+        //             bat "call minikube-env.bat"
+        //         }
+        //     }
+        // }
         
         stage('Build and Load Docker Image') {
             steps {
