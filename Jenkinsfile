@@ -46,8 +46,8 @@ pipeline {
                             if (!minikubeStatus.contains("Running")) {
                                 echo "Starting Minikube..."
                                 timeout(time: 5, unit: 'MINUTES') {
-                                    bat "minikube start --driver=docker
-"
+                                    bat "minikube start --driver=docker"
+
                                 }
                                 sleep(30)
                             }
