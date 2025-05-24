@@ -58,9 +58,9 @@ pipeline {
                     // Skip kubectl commands, assume manual deployment
                     echo "Skipping kubectl deployment commands as Kubernetes is managed manually."
                     
-                    // Print final web page URL
-                    def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
-                    echo "Access the application at: http://${minikubeIP}:30000"
+                    // Print final web page URL using minikube service command
+                    def serviceURL = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
+                    echo "Access the application at: ${serviceURL}"
                 }
             }
         }
