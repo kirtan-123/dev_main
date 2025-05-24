@@ -61,14 +61,37 @@ pipeline {
                     
                     // Create deployment with correct image pull policy
                     bat """
-                        kubectl create deployment schedule-tracker --image=${DOCKER_IMAGE}:${DOCKER_TAG} --dry-run=client -o yaml > deployment.yaml
-                        kubectl apply -f deployment.yaml
+                        echo apiVersion: apps/v1 > deployment.yaml
+                        echo kind: Deployment >> deployment.yaml
+                        echo metadata: >> deployment.yaml
+                        echo   name: schedule-tracker >> deployment.yaml
+                        echo spec: >> deployment.yaml
+                        echo   replicas: 2 >> deployment.yaml
+                        echo   selector: >> deployment.yaml
+                        echo     matchLabels: >> deployment.yaml
+                        echo       app: schedule-tracker >> deployment.yaml
+                        echo   template: >> deployment.yaml
+                        echo     metadata: >> deployment.yaml
+                        echo       labels: >> deployment.yaml
+                        echo         app: schedule-tracker >> deployment.yaml
+                        echo     spec: >> deployment.yaml
+                        echo       containers: >> deployment.yaml
+                        echo       - name: schedule-tracker >> deployment.yaml
+                        echo         image: ${DOCKER_IMAGE}:${DOCKER_TAG} >> deployment.yaml
+                        echo         imagePullPolicy: Never >> deployment.yaml
+                        echo         ports: >> deployment.yaml
+                        echo         - containerPort: 5000 >> deployment.yaml
+                        echo         volumeMounts: >> deployment.yaml
+                        echo         - name: sqlite-data >> deployment.yaml
+                        echo           mountPath: /app/instance >> deployment.yaml
+                        echo       volumes: >> deployment.yaml
+                        echo       - name: sqlite-data >> deployment.yaml
+                        echo         persistentVolumeClaim: >> deployment.yaml
+                        echo           claimName: sqlite-pvc >> deployment.yaml
                     """
                     
-                    // Update deployment to use local image
-                    bat """
-                        kubectl patch deployment schedule-tracker -p '{"spec":{"template":{"spec":{"containers":[{"name":"schedule-tracker","imagePullPolicy":"Never"}]}}}}'
-                    """
+                    // Apply the deployment
+                    bat "kubectl apply -f deployment.yaml"
                     
                     // Apply Service
                     bat "kubectl apply -f kubernetes/service.yaml"
