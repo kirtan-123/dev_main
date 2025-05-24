@@ -17,14 +17,15 @@ pipeline {
         stage('Setup Minikube') {
             steps {
                 script {
-                    // Delete existing minikube cluster if it exists
-                    bat "minikube delete"
+                    // Check if Minikube is running
+                    def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
                     
-                    // Start minikube with docker driver
-                    bat "minikube start --driver=docker --force"
-                    
-                    // Wait for minikube to be ready
-                    bat "minikube status"
+                    if (!minikubeStatus.contains("Running")) {
+                        echo "Starting Minikube..."
+                        bat "minikube start --driver=docker"
+                    } else {
+                        echo "Minikube is already running"
+                    }
                     
                     // Configure docker to use minikube's docker daemon
                     bat "minikube docker-env --shell cmd"
@@ -58,8 +59,17 @@ pipeline {
                     // Apply Service
                     bat "kubectl apply -f kubernetes/service.yaml"
                     
-                    // Wait for deployment to be ready
-                    bat "kubectl rollout status deployment/schedule-tracker"
+                    // Wait for deployment with timeout and better error handling
+                    timeout(time: 5, unit: 'MINUTES') {
+                        bat """
+                            kubectl rollout status deployment/schedule-tracker || (
+                                echo "Deployment failed. Checking pod status..."
+                                kubectl get pods
+                                kubectl describe deployment schedule-tracker
+                                exit 1
+                            )
+                        """
+                    }
                 }
             }
         }
@@ -74,7 +84,11 @@ pipeline {
             }
         }
         failure {
-            echo 'Deployment failed!'
+            script {
+                echo 'Deployment failed! Checking pod status...'
+                bat "kubectl get pods"
+                bat "kubectl describe deployment schedule-tracker"
+            }
         }
     }
 } 
