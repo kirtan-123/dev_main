@@ -66,7 +66,7 @@ pipeline {
                         } catch (Exception e) {
                             echo "Error during Docker setup: ${e.message}"
                             // Cleanup
-                            bat "minikube delete --force"
+                        
                             error "Failed to setup Docker environment"
                         }
                     }
