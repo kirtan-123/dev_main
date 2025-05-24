@@ -40,18 +40,35 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
-                       
-                       
-                        
-                        // Set Docker environment to Minikube's Docker daemon
-                        bat "minikube docker-env --shell cmd > minikube-env.bat"
-                        bat "call minikube-env.bat"
-                        
-                        // Build the image inside Minikube's Docker daemon
-                        bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                        
-                        // Verify the image exists
-                        bat "docker images | findstr ${DOCKER_IMAGE}"
+                        try {
+                            // First ensure Minikube is running
+                            def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
+                            if (!minikubeStatus.contains("Running")) {
+                                echo "Starting Minikube..."
+                                timeout(time: 2, unit: 'MINUTES') {
+                                    bat "minikube start --force"
+                                }
+                                sleep(30)
+                            }
+                            
+                            // Set Docker environment to Minikube's Docker daemon with timeout
+                            timeout(time: 1, unit: 'MINUTES') {
+                                bat "minikube docker-env --shell cmd > minikube-env.bat"
+                                bat "type minikube-env.bat"
+                                bat "call minikube-env.bat"
+                            }
+                            
+                            // Build the image inside Minikube's Docker daemon
+                            bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                            
+                            // Verify the image exists
+                            bat "docker images | findstr ${DOCKER_IMAGE}"
+                        } catch (Exception e) {
+                            echo "Error during Docker setup: ${e.message}"
+                            // Cleanup
+                            bat "minikube delete --force"
+                            error "Failed to setup Docker environment"
+                        }
                     }
                 }
             }
