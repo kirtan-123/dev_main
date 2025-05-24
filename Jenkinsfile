@@ -2,8 +2,9 @@ pipeline {
     agent any
     
     environment {
-        PATH = "C:\\Users\\Kirtan\\AppData\\Local\\Programs\\Python\\Python312;C:\\Users\\Kirtan\\AppData\\Local\\Programs\\Python\\Python312\\Scripts;${env.PATH}"
-        FLASK_PORT = "5000"
+        DOCKER_IMAGE = "schedule-tracker"
+        DOCKER_TAG = "latest"
+        KUBE_NAMESPACE = "default"
     }
     
     stages {
@@ -13,35 +14,47 @@ pipeline {
             }
         }
         
-        stage('Install Dependencies') {
+        stage('Build Docker Image') {
             steps {
-                bat '''
-                    echo "Verifying Python installation..."
-                    python --version
-                    echo "Installing dependencies..."
-                    python -m pip install --upgrade pip
-                    python -m pip install -r requirements.txt
-                '''
+                script {
+                    // Build Docker image locally for Minikube
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    
+                    // Load image into Minikube
+                    sh "minikube image load ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                }
             }
         }
         
-        stage('Deploy Flask App') {
+        stage('Deploy to Minikube') {
             steps {
-                bat '''
-                    echo "Starting Flask Application..."
-                    echo "The application will be available at: http://localhost:5000"
-                    start /B cmd /c "python app.py --host=0.0.0.0 --port=%FLASK_PORT% > flask_app.log 2>&1"
-                    timeout /t 5 /nobreak
-                    echo "Flask application should now be running - check flask_app.log for details"
-                    type flask_app.log
-                '''
+                script {
+                    // Apply PersistentVolume
+                    sh "kubectl apply -f kubernetes/persistent-volume.yaml"
+                    
+                    // Apply PersistentVolumeClaim
+                    sh "kubectl apply -f kubernetes/persistent-volume.yaml"
+                    
+                    // Apply Deployment
+                    sh "kubectl apply -f kubernetes/deployment.yaml"
+                    
+                    // Apply Service
+                    sh "kubectl apply -f kubernetes/service.yaml"
+                    
+                    // Wait for deployment to be ready
+                    sh "kubectl rollout status deployment/schedule-tracker"
+                }
             }
         }
     }
     
     post {
         success {
-            echo 'Flask application deployed successfully! Access it at: http://localhost:5000'
+            script {
+                def minikubeIP = sh(script: "minikube ip", returnStdout: true).trim()
+                echo "Application deployed successfully to Minikube!"
+                echo "Access the application at: http://${minikubeIP}:30000"
+            }
         }
         failure {
             echo 'Deployment failed!'
