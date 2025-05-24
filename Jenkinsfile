@@ -61,6 +61,15 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
+                        // Check if Minikube is running and start it if not
+                        def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
+                        if (!minikubeStatus.contains("Running")) {
+                            echo "Starting Minikube..."
+                            bat "minikube start"
+                            // Wait for Minikube to be fully ready
+                            sleep(30)
+                        }
+                        
                         // Run minikube service command and print the URL
                         def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
                         echo "Minikube service URL: ${serviceUrl}"
