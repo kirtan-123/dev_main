@@ -58,11 +58,9 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
-                        // Skip kubectl commands, assume manual deployment
-                        echo "Skipping kubectl deployment commands as Kubernetes is managed manually."
-                        
-                        // Print final web page URL directly with static NodePort
-                        echo "Access the application at: http://127.0.0.1:30000"
+                        // Run minikube service command and print the URL
+                        def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
+                        echo "Minikube service URL: ${serviceUrl}"
                     }
                 }
             }
