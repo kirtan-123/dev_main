@@ -14,6 +14,25 @@ pipeline {
             }
         }
         
+        stage('Setup Minikube') {
+            steps {
+                script {
+                    // Check if Minikube is running
+                    def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
+                    
+                    if (!minikubeStatus.contains("Running")) {
+                        echo "Starting Minikube..."
+                        bat "minikube start"
+                        
+                        // Wait for Minikube to be ready
+                        bat "minikube status"
+                    } else {
+                        echo "Minikube is already running"
+                    }
+                }
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
                 script {
