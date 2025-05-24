@@ -45,8 +45,9 @@ pipeline {
                             def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
                             if (!minikubeStatus.contains("Running")) {
                                 echo "Starting Minikube..."
-                                timeout(time: 2, unit: 'MINUTES') {
-                                    bat "minikube start --force"
+                                timeout(time: 5, unit: 'MINUTES') {
+                                    bat "minikube start --driver=docker
+"
                                 }
                                 sleep(30)
                             }
