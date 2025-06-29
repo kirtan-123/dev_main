@@ -60,34 +60,32 @@ pipeline {
 
         stage('Deploy to Minikube') {
     steps {
-        dir('c:/Users/Kirtan/Desktop/dev_main') {
+        dir('C:/Users/Kirtan/Desktop/dev_main') {
             script {
                 echo "Deploying to Minikube cluster..."
 
-                // Check file exists first
-                def fileExists = fileExists 'kubernetes/deployment.yaml'
+                // Confirm file exists
+                def fileExists = fileExists('kubernetes/deployment.yaml')
                 if (!fileExists) {
-                    error "❌ deployment.yaml not found at kubernetes/deployment.yaml"
+                    error "❌ deployment.yaml not found at: kubernetes/deployment.yaml"
                 }
 
-                // Apply the file using full relative path
-                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl apply -f kubernetes/deployment.yaml'
+                // Apply the deployment using correct relative path from this directory
+                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl apply -f kubernetes\\deployment.yaml'
 
-                // Show current resource statuses
-                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get all'
-
-                // Wait for deployment to complete
+                // Wait for rollout
                 timeout(time: 2, unit: 'MINUTES') {
                     bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl rollout status deployment/schedule-tracker'
                 }
 
                 // Get service URL
                 def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
-                echo "App available at: ${serviceUrl}"
+                echo "✅ App available at: ${serviceUrl}"
             }
         }
     }
 }
+
 
     }
 
