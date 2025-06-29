@@ -83,7 +83,12 @@ pipeline {
 
     post {
     always {
-        echo "📦 Post block "
+        echo "📦 Post block running... Showing current Kubernetes pod status"
+
+        // Always display pod and deployment info, no matter the outcome
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker || echo "deployment not found"'
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods || echo "pods not found"'
     }
 
     success {
@@ -95,12 +100,9 @@ pipeline {
     }
 
     failure {
-        echo "❌ Pipeline failed. Gathering Kubernetes debug information..."
-
-        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
-        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker || echo "deployment not found"'
-        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods || echo "pods not found"'
+        echo "❌ Pipeline failed. (Detailed logs already printed above.)"
     }
 }
+
 
 }
