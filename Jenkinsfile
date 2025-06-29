@@ -6,6 +6,8 @@ pipeline {
         DOCKER_TAG = "latest"
         KUBE_NAMESPACE = "default"
         KUBECONFIG = "C:/Users/Kirtan/.kube/config"
+        CHANGE_MINIKUBE_NONE_USER = 'true'
+
     }
 
     stages {
