@@ -97,7 +97,7 @@ pipeline {
     failure {
         echo "❌ Pipeline failed. Gathering Kubernetes debug information..."
 
-        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'More actions
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
         bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker || echo "deployment not found"'
         bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods || echo "pods not found"'
     }
