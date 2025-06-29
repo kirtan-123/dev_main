@@ -65,9 +65,7 @@ pipeline {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
                         echo "Deploying to Minikube cluster..."
-                        // Optional: Apply Kubernetes manifests here
-                        bat "kubectl apply -f deployment.yaml"
-                        bat "kubectl rollout status deployment/schedule-tracker --timeout=60s"
+                       
 
                         // Verify deployment.yaml exists in the kubernetes folder
                         def fileExists = fileExists 'kubernetes/deployment.yaml'
