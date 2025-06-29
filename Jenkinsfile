@@ -59,9 +59,7 @@ pipeline {
                         }
 
                         // ✅ NEW: Get service URL from Minikube
-                        def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
-                        echo "🌐 Application is running at: ${serviceUrl}"
-                    }
+                        
                 }
             }
         }
