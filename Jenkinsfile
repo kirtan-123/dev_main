@@ -70,8 +70,11 @@ pipeline {
                         }
 
                         // Get service URL
-                        def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
-                        echo "✅ App available at: ${serviceUrl}"
+                       timeout(time: 1, unit: 'MINUTES') {
+    def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
+    echo "✅ App available at: ${serviceUrl}"
+}
+
                     }
                 }
             }
