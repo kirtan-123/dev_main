@@ -62,7 +62,7 @@ pipeline {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
-                        echo "⚠️ Skipping deployment apply. Make sure you run it manually in terminal."
+                        echo " deployment "
 
                         // Wait for existing deployment to be ready
                         timeout(time: 2, unit: 'MINUTES') {
