@@ -58,7 +58,7 @@ pipeline {
             }
         }
 
-        stage('Verify Deployment (Skip Apply)') {
+        stage('Verify Deployment') {
             steps {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
@@ -79,21 +79,25 @@ pipeline {
     }
 
     post {
-        success {
-            script {
-                def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
-                echo "✅ Application deployed successfully to Minikube!"
-                echo "Minikube IP: ${minikubeIP}"
-            }
-        }
+    always {
+        echo "📦 Post block "
+    }
 
-        failure {
-            script {
-                echo "❌ Deployment failed. Gathering debug info..."
-                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
-                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker'
-                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods'
-            }
+    success {
+        script {
+            echo "✅ Pipeline succeeded. Getting Minikube IP..."
+            def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
+            echo "Minikube IP: ${minikubeIP}"
         }
     }
+
+    failure {
+        echo "❌ Pipeline failed. Gathering Kubernetes debug information..."
+
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker || echo "deployment not found"'
+        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods || echo "pods not found"'
+    }
+}
+
 }
