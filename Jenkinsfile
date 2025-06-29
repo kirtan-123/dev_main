@@ -73,8 +73,7 @@ pipeline {
                             error "deployment.yaml not found in kubernetes folder"
                         }
                         
-                        // Apply Kubernetes manifests from the kubernetes folder
-                        bat "kubectl apply -f kubernetes/deployment.yaml"
+                    
                         
                         // Wait for deployment to be ready
                         timeout(time: 2, unit: 'MINUTES') {
