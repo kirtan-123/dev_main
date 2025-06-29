@@ -28,7 +28,6 @@ pipeline {
                     def minikubeStatus = bat(script: "minikube status", returnStdout: true).trim()
                     if (!minikubeStatus.contains("Running")) {
                         echo "Minikube not running. Starting Minikube..."
-                        // Add --wait=false and --v=5 to reduce hanging
                         timeout(time: 5, unit: 'MINUTES') {
                             bat "minikube start --driver=docker --wait=false --v=5"
                         }
@@ -43,7 +42,6 @@ pipeline {
         stage('Use Minikube Docker Daemon') {
             steps {
                 echo "Pointing Docker to Minikube's Docker daemon..."
-                // Inline version of setting docker-env (instead of using bat files)
                 bat '''
                 @echo off
                 for /f "tokens=*" %%i in ('minikube docker-env --shell cmd') do call %%i
@@ -65,22 +63,24 @@ pipeline {
                 dir('c:/Users/Kirtan/Desktop/dev_main') {
                     script {
                         echo "Deploying to Minikube cluster..."
-                       
 
-                        // Verify deployment.yaml exists in the kubernetes folder
                         def fileExists = fileExists 'kubernetes/deployment.yaml'
                         if (!fileExists) {
                             error "deployment.yaml not found in kubernetes folder"
                         }
-                        
-                    
-                        
-                        // Wait for deployment to be ready
+
+                        // Apply deployment file using full path and explicit KUBECONFIG
+                        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl apply -f kubernetes/deployment.yaml'
+
+                        // Show current status
+                        bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get all'
+
+                        // Wait for deployment to complete
                         timeout(time: 2, unit: 'MINUTES') {
-                            bat "kubectl rollout status deployment/schedule-tracker"
+                            bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl rollout status deployment/schedule-tracker'
                         }
-                        
-                        // Get service URL
+
+                        // Fetch service URL
                         def serviceUrl = bat(script: "minikube service schedule-tracker-service --url", returnStdout: true).trim()
                         echo "App available at: ${serviceUrl}"
                     }
@@ -101,9 +101,9 @@ pipeline {
         failure {
             script {
                 echo "❌ Deployment failed. Gathering debug info..."
-                bat "kubectl get pods -o wide"
-                bat "kubectl describe deployment schedule-tracker"
-                bat "kubectl describe pods"
+                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
+                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker'
+                bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods'
             }
         }
     }
