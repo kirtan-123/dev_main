@@ -91,6 +91,10 @@ pipeline {
             echo "✅ Pipeline succeeded. Getting Minikube IP..."
             def minikubeIP = bat(script: "minikube ip", returnStdout: true).trim()
             echo "Minikube IP: ${minikubeIP}"
+            bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl get pods -o wide'
+            bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe deployment schedule-tracker || echo "deployment not found"'
+            bat 'set KUBECONFIG=C:\\Users\\Kirtan\\.kube\\config && kubectl describe pods || echo "pods not found"'
+    }
         }
     }
 
