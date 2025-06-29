@@ -17,6 +17,27 @@ pipeline {
             }
         }
 
+        stage('Debug Minikube Access') {
+            steps {
+                bat "whoami"
+                bat "minikube status"
+                bat "kubectl config current-context"
+            }
+        }
+
+        stage('Start Minikube') {
+            steps {
+                echo "Starting Minikube if not already running..."
+                bat '''
+                @echo off
+                minikube status | findstr /C:"Running"
+                if %ERRORLEVEL% NEQ 0 (
+                    minikube start
+                )
+                '''
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 checkout scm
